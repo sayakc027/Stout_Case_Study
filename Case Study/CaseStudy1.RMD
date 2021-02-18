@@ -1,0 +1,456 @@
+---
+title: <center><b> Stout Case Study </b></center>
+subtitle: <center><b> Number 1 </b></center>
+author: <center> Sayak Chakraborty </center>
+output:
+  html_document: 
+    code_folding: show
+always_allow_html: yes
+---
+
+<style>
+body {
+        text-align: justify;
+        font-family: "Bookman", Bookman;
+        font-size: 15pt;
+     }
+</style>
+
+<style>
+
+h1 {
+  color: #2100A4;
+  font-family: Bookman;
+}
+
+h2 {
+  color: #2100A4;
+  font-family: Bookman;
+}
+
+h3 {
+  color: #2100A4;
+  font-family: Bookman;
+}
+
+h4 {
+  color: #2100A4;
+  font-family: Bookman;
+}
+
+a, a:hover {
+    color: #C70039 ;
+}
+
+</style>
+
+
+# {.tabset .tabset-fade .tabset-pills}
+
+## 1. **Synopsis**
+
+Case Study 1:
+
+Below is a dataset containing synthetic transactions and some transactions are marked as fraudulent. We would like you to perform the following using the language of your choice:
+
+•	Describe the dataset and any issues with it.
+•	Generate a minimum of 5 visualizations using the data and write a brief description of your observations. Additionally, all attempts should be made to make the visualizations visually appealing
+•	Create a feature set and perform prediction of fraudulent transactions using at least 2 algorithms. Describe any data cleansing that must be performed.
+•	Visualize the test results and propose what could be done to improve results. Also describe assumptions you made and your approach.
+
+
+Dataset: https://www.kaggle.com/ntnu-testimon/paysim1
+
+Output: 
+
+An HTML website hosting all visualizations and documenting all visualizations and descriptions. All code hosted on GitHub for viewing. Please provide URL’s to both the output and the GitHub repo.
+
+
+
+## 2. **Packages Required**
+We begin by loading the packages that will be required throughout the course of our analysis.
+
+```{r Loading the required packages, results='hide', echo=TRUE, message=FALSE, warning=FALSE, fig.align='center'}
+
+library(tidyr)
+library(DT)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(kableExtra)
+library(lubridate)
+library(readxl)
+library(highcharter)
+library(lubridate)
+library(scales)
+library(RColorBrewer)
+library(wesanderson)
+library(plotly)
+library(shiny)
+library(readxl)
+library(readr)
+library(scales)
+library(stringr)
+library(boot)
+library(reshape2)
+library(gridExtra)
+```
+***
+
+## 3. **Data Preparation** {.tabset .tabset-fade .tabset-pills}
+
+After loading the required packages, we move on to the data perparation step which would start by loading the data into our R-studio.
+
+### 3.1 Loading and Reading the Data 
+
+```{r Loading the data, echo=FALSE, include=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
+#data <- data.table::fread("PS_20174392719_1491204439457_log.csv")
+
+data <- read.csv('PS_20174392719_1491204439457_log.csv')
+
+
+```
+
+Now, I am converting the character variables to factor for my analysis.
+
+```{r}
+data <- mutate_if(data, is.character, as.factor)
+```
+
+
+<h2> Summary and Glimpse of the Data </h2>
+
+```{r Summary and Glimpse of the Data, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center'}
+
+str(data)
+summary(data)
+glimpse(data)
+```
+
+<h3> Observations </h3>
+
+So, there are 11 columns/observations. There are 6,362,620 rows.
+The Distribution, Summary and Glimpse of the Data is available above for a better understanding.
+
+
+<h2> Checking for NA </h2>
+
+Next we will check for missing values and deal with them accordingly. 
+```{r Checking for NA, echo=TRUE, message=FALSE, warning=FALSE, fig.align='center'}
+summary(is.na(data))
+
+colSums(is.na(data))
+```
+
+<h3> Observations </h3>
+The Data set do not have any Null Values.
+
+### 3.3 Cleaned Dataset
+
+The final data set (top 20) can be found below in an interactive table.
+
+
+```{r Datatable, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center' }
+datatable(head(data, 20), class = 'cell-border stripe')
+```
+
+****
+
+## 4. Task
+
+Counting the Number of Fradulent Cases
+
+```{r}
+#No. of fraud records
+data %>% count(isFraud)
+
+#percent of fraudulent records
+prop.table(table(data$isFraud))*100
+```
+<h3> Observations </h3>
+
+There are 8213 number of fraudulent transactions. Which is equivalent to around 0.1290%.
+
+```{r}
+
+data %>% 
+  count(type, sort = TRUE) %>%
+  ggplot(aes(x = reorder(type, +n), y = n)) +
+  geom_col(stat ="identity", color = "black", fill="#641E16") +
+  coord_flip() +
+  theme_gray() +
+  geom_text(aes(label = n), hjust = 2.0, color = "white", size = 3.5) +
+  ggtitle("Transactions as per Type", subtitle = "") + 
+  xlab('Transaction Type') + 
+  ylab('No of transactions') +
+  theme(legend.position = "none",
+        plot.title = element_text(color = "black", size = 14, face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(color = "darkblue", hjust = 0.5),
+        axis.title.y = element_text(),
+        axis.title.x = element_text(),
+        axis.ticks = element_blank())
+
+```
+<h3> Observations </h3>
+
+Above is the visual representations of the Transactions per type.
+
+```{r}
+
+# Number of Fraudulent Transactions
+data %>% count(isFraud)
+
+#percent of fraudulent records
+prop.table(table(data$isFraud))*100
+```
+
+
+
+```{r}
+
+#Finding out the category/type from which more no. of fraud transactions took place
+fraud_trans <- data %>% 
+  group_by(type) %>% 
+  summarise(fraud_transactions = sum(isFraud))
+
+fraud_trans
+
+fraud_trans %>% 
+  ggplot(aes(x = reorder(type, +fraud_transactions), y = fraud_transactions)) +
+  geom_col(stat ="identity", color = "black", fill="#641E16") +
+  coord_flip() +
+  theme_gray() +
+  geom_text(aes(label = fraud_transactions), hjust = 2.0, color = "white", size = 3.5) +
+  ggtitle("Fraud Transactions Per Type", subtitle = "") + 
+  xlab('Transaction Type') + 
+  ylab('No of Fraud Transactions') +
+  theme(legend.position = "none",
+        plot.title = element_text(color = "black", size = 14, face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(color = "darkblue", hjust = 0.5),
+        axis.title.y = element_text(),
+        axis.title.x = element_text(),
+        axis.ticks = element_blank())
+
+
+```
+<h3> Observations </h3>
+
+Cash Out and Transfer are the ones with all the numbers of Fraudulent Transactions with 4116 and 4097 transactions respectively,
+
+```{r}
+
+#frequency distribution of amount in fradulent transactions
+
+data %>% 
+  filter(isFraud == 1) %>% 
+  ggplot(aes(x = amount,  fill = amount)) +
+  geom_histogram(bins = 50, aes(fill = 'Amt'), fill="#641E16") +
+  theme_gray() +
+  ggtitle('Fraud transaction Amount distribution', subtitle = "") + 
+  xlab('Amount in Dollars') + 
+  ylab('No of Fraud Transactions') +
+  theme(legend.position = "none",
+        plot.title = element_text(color = "black", size = 14, face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(color = "darkblue", hjust = 0.5),
+        axis.title.y = element_text(),
+        axis.title.x = element_text(),
+        axis.ticks = element_blank())
+```
+<h3> Observations </h3>
+
+The Distribution is rightly screwed which means that the fraudulent transactions are generally of small amount.
+```{r}
+
+#understanding Step
+
+summary(data$step)
+
+summary(is.na(data$step))
+```
+<h3> Observations </h3>
+
+Step - Maps a unit of time in the real world. In this case 1 step is 1 hour of time.
+
+```{r}
+
+
+#Distribution of transactions at different time intervals
+timeInt <- data %>% 
+  ggplot(aes(x = step)) +
+  geom_histogram(bins = 150, aes(fill = 'isFraud'), show.legend = FALSE, fill="#641E16") +
+  theme_gray() +
+  ggtitle('Total transactions at different time interval', subtitle = "") + 
+  xlab('Steps') + 
+  ylab('No. of transactions') +
+  theme(legend.position = "none",
+        plot.title = element_text(color = "black", size = 14, face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(color = "darkblue", hjust = 0.5),
+        axis.title.y = element_text(),
+        axis.title.x = element_text(),
+        axis.ticks = element_blank())
+
+fradtimInt <- data %>% 
+  filter(isFraud == 1) %>% 
+  ggplot(aes(x = step)) +
+  geom_histogram(bins =150, aes(fill = 'isFraud'), show.legend = FALSE, fill="#641E16") +
+  theme_gray() +
+  ggtitle('Fraud transactions at different time interval', subtitle = "") + 
+  xlab('Steps') + 
+  ylab('No.of fraud transactions') +
+  theme(legend.position = "none",
+        plot.title = element_text(color = "black", size = 14, face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(color = "darkblue", hjust = 0.5),
+        axis.title.y = element_text(),
+        axis.title.x = element_text(),
+        axis.ticks = element_blank())
+
+grid.arrange(timeInt, fradtimInt, nrow=2, ncol=1)
+```
+
+<h3> Observations </h3>
+
+These shows the Number of Fraudulent transactions and no. of Transactions step-wise. The overall transactions drop after 400 but the fradulent transactions remain the same.
+
+<h2> Random Forest Algorithm </h2>
+
+```{r}
+
+
+#creating new dataset with filtering and subsetting
+data_filt <- data %>% 
+  select(-c('step','nameOrig', 'nameDest', 'isFlaggedFraud')) %>%
+  filter(type %in% c('CASH_OUT', 'TRANSFER'))
+
+table(data_filt$type)
+
+summary(data_filt)
+```
+
+Cconverting isFraud to Factor for my Analysis.
+
+```{r}
+
+#convert isFraud variable into factor variable for developing model
+data_filt$isFraud <- as.factor(data_filt$isFraud)
+
+str(data_filt)
+```
+
+```{r}
+
+head(data_filt)
+```
+
+
+```{r}
+
+#splitting the data into train and test
+set.seed(99999)
+index <- sample(2, nrow(data_filt), replace = T, prob = c(.8,.2))
+
+train <- data_filt[index==1,]
+test <- data_filt[index==2,]
+
+dim(train)
+dim(test)
+```
+
+
+```{r}
+
+#Developing a model on train data with Random Forest algorithm
+library(randomForest)
+memory.limit(1000000)
+fit_forest <- randomForest(isFraud ~ ., data = train, ntree=20)
+```
+
+<h3> Observations </h3>
+I developed a Model on Train Data with Random Forest Algorithm.
+
+```{r}
+#printing
+
+print(fit_forest)
+```
+<h3> Observations </h3>
+
+Printing the Observation of the Fitted Model.
+
+```{r}
+#prediction on training data
+p1 <- predict(fit_forest, train)
+```
+
+<h3> Observations </h3>
+
+Performed Prediction on the training Model. he Values can be seen here.
+
+```{r}
+#Confusion Matrix on train data
+library(caret)
+confusionMatrix(train$isFraud, p1)
+```
+
+```{r}
+#prediction on test data
+p2 <- predict(fit_forest, test)
+#confusion matrix on test data
+confusionMatrix(test$isFraud, p2)
+```
+
+```{r}
+
+#Tuning parameters
+#optimal no. of trees
+plot(fit_forest)
+```
+
+```{r}
+hist(treesize(fit_forest),
+     main = "No. of Nodes for the Trees",
+     col = "#641E16")
+```
+
+```{r}
+#feature importance
+fit_forest$importance
+```
+
+```{r}
+varImpPlot(fit_forest)
+```
+
+```{r}
+importance_matrix <- data.frame(Variables = rownames(fit_forest$importance), fit_forest$importance, row.names = NULL)
+
+importance_matrix %>% 
+  ggplot( aes(y = MeanDecreaseGini , x = Variables,))+
+  geom_col(stat ="identity", color = "black", fill="#641E16") + 
+  coord_flip() +
+  theme_gray() +
+  geom_text(aes(label = round(MeanDecreaseGini,2)), hjust = 2.0, color = "white", size = 3.5) +
+  ggtitle('Variiable importance plot', subtitle = "") + 
+  theme(legend.position = "none",
+        plot.title = element_text(color = "black", size = 14, face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(color = "darkblue", hjust = 0.5),
+        axis.title.y = element_text(),
+        axis.title.x = element_text(),
+        axis.ticks = element_blank())
+
+
+```
+
+<h1> Extreme Gradient Boosting algorithm </h1>
+
+```{r}
+#Extreme Gradient Boosting algorithm
+library(xgboost)
+library(Matrix)
+```
+
+```{r}
+dim(test)
+
+```
+
+<h1> Needed more time to apply Second Algorithm </h1>
