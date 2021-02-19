@@ -103,7 +103,7 @@ After loading the required packages, we move on to the data perparation step whi
 
 ### 3.1 Loading and Reading the Data 
 
-```{r Loading the data, echo=FALSE, include=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
+```{r Loading the data, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 #data <- data.table::fread("PS_20174392719_1491204439457_log.csv")
 
 data <- read.csv('PS_20174392719_1491204439457_log.csv')
@@ -113,7 +113,7 @@ data <- read.csv('PS_20174392719_1491204439457_log.csv')
 
 Now, I am converting the character variables to factor for my analysis.
 
-```{r}
+```{r , echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 data <- mutate_if(data, is.character, as.factor)
 ```
 
@@ -156,22 +156,25 @@ datatable(head(data, 20), class = 'cell-border stripe')
 
 ****
 
-## 4. Task
+## **4. Task**
 
-Counting the Number of Fradulent Cases
+<h2> Counting the Number of Fraudulent Cases </h2>
 
-```{r}
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 #No. of fraud records
 data %>% count(isFraud)
 
 #percent of fraudulent records
 prop.table(table(data$isFraud))*100
 ```
+
+
 <h3> Observations </h3>
 
 There are 8213 number of fraudulent transactions. Which is equivalent to around 0.1290%.
 
-```{r}
+
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 
 data %>% 
   count(type, sort = TRUE) %>%
@@ -195,7 +198,7 @@ data %>%
 
 Above is the visual representations of the Transactions per type.
 
-```{r}
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 
 # Number of Fraudulent Transactions
 data %>% count(isFraud)
@@ -206,7 +209,7 @@ prop.table(table(data$isFraud))*100
 
 
 
-```{r}
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 
 #Finding out the category/type from which more no. of fraud transactions took place
 fraud_trans <- data %>% 
@@ -237,7 +240,7 @@ fraud_trans %>%
 
 Cash Out and Transfer are the ones with all the numbers of Fraudulent Transactions with 4116 and 4097 transactions respectively,
 
-```{r}
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 
 #frequency distribution of amount in fradulent transactions
 
@@ -259,7 +262,7 @@ data %>%
 <h3> Observations </h3>
 
 The Distribution is rightly screwed which means that the fraudulent transactions are generally of small amount.
-```{r}
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 
 #understanding Step
 
@@ -271,7 +274,7 @@ summary(is.na(data$step))
 
 Step - Maps a unit of time in the real world. In this case 1 step is 1 hour of time.
 
-```{r}
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 
 
 #Distribution of transactions at different time intervals
@@ -311,9 +314,9 @@ grid.arrange(timeInt, fradtimInt, nrow=2, ncol=1)
 
 These shows the Number of Fraudulent transactions and no. of Transactions step-wise. The overall transactions drop after 400 but the fradulent transactions remain the same.
 
-<h2> Random Forest Algorithm </h2>
+<h1> Random Forest Algorithm </h1>
 
-```{r}
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 
 
 #creating new dataset with filtering and subsetting
@@ -328,7 +331,7 @@ summary(data_filt)
 
 Cconverting isFraud to Factor for my Analysis.
 
-```{r}
+```{r , echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 
 #convert isFraud variable into factor variable for developing model
 data_filt$isFraud <- as.factor(data_filt$isFraud)
@@ -336,13 +339,13 @@ data_filt$isFraud <- as.factor(data_filt$isFraud)
 str(data_filt)
 ```
 
-```{r}
+```{r , echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 
 head(data_filt)
 ```
 
 
-```{r}
+```{r , echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 
 #splitting the data into train and test
 set.seed(99999)
@@ -356,7 +359,7 @@ dim(test)
 ```
 
 
-```{r}
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 
 #Developing a model on train data with Random Forest algorithm
 library(randomForest)
@@ -367,7 +370,7 @@ fit_forest <- randomForest(isFraud ~ ., data = train, ntree=20)
 <h3> Observations </h3>
 I developed a Model on Train Data with Random Forest Algorithm.
 
-```{r}
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 #printing
 
 print(fit_forest)
@@ -376,7 +379,7 @@ print(fit_forest)
 
 Printing the Observation of the Fitted Model.
 
-```{r}
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 #prediction on training data
 p1 <- predict(fit_forest, train)
 ```
@@ -385,42 +388,42 @@ p1 <- predict(fit_forest, train)
 
 Performed Prediction on the training Model. he Values can be seen here.
 
-```{r}
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 #Confusion Matrix on train data
 library(caret)
 confusionMatrix(train$isFraud, p1)
 ```
 
-```{r}
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 #prediction on test data
 p2 <- predict(fit_forest, test)
 #confusion matrix on test data
 confusionMatrix(test$isFraud, p2)
 ```
 
-```{r}
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 
 #Tuning parameters
 #optimal no. of trees
 plot(fit_forest)
 ```
 
-```{r}
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 hist(treesize(fit_forest),
      main = "No. of Nodes for the Trees",
      col = "#641E16")
 ```
 
-```{r}
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 #feature importance
 fit_forest$importance
 ```
 
-```{r}
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 varImpPlot(fit_forest)
 ```
 
-```{r}
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 importance_matrix <- data.frame(Variables = rownames(fit_forest$importance), fit_forest$importance, row.names = NULL)
 
 importance_matrix %>% 
@@ -440,17 +443,31 @@ importance_matrix %>%
 
 ```
 
-<h1> Extreme Gradient Boosting algorithm </h1>
+<h1> Logistic Regression Algorithm </h1>
 
-```{r}
-#Extreme Gradient Boosting algorithm
-library(xgboost)
-library(Matrix)
-```
 
-```{r}
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 dim(test)
 
 ```
+<h2> Building a Logistic Regression Model </h2>
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
 
-<h1> Needed more time to apply Second Algorithm </h1>
+model <- glm(isFraud ~.,family=binomial(link='logit'),data=train)
+```
+
+<h2> Summary of the Logistic Model </h2>
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
+
+summary(model)
+```
+
+
+<h2> Anova of the Logistic Model </h2>
+```{r, echo=TRUE,  message=FALSE, warning=FALSE, fig.align='center'}
+anova(model, test="Chisq")
+```
+
+<h3> Observations </h3>
+The difference between the null deviance and the residual deviance shows how our model is doing against the null model (a model with only the intercept). The wider this gap, the better.
+
